@@ -1,0 +1,652 @@
+import React, { useState, useEffect } from 'react';
+import { ChevronDown, ChevronRight, Plus, Edit, Trash2, BarChart3, Users, Clock, MessageSquare, Filter, Target, CheckCircle } from 'lucide-react';
+
+const MessageRoutingPlanner = () => {
+  const [activeTab, setActiveTab] = useState('triage');
+  const [messages, setMessages] = useState([]);
+  const [templates, setTemplates] = useState([
+    {
+      id: 1,
+      name: 'General Inquiry',
+      subject: 'Re: Your Inquiry',
+      body: `Thanks for reaching out to [Company Name].
+
+We've received your message and will respond within 48 hours.
+
+If this is urgent, please call [phone number].
+
+Best regards,
+[Company Name] Team`
+    },
+    {
+      id: 2,
+      name: 'Sales Inquiry',
+      subject: 'Re: Your Interest in Our Services',
+      body: `Thanks for your interest in [Company Name]!
+
+We're excited to learn more about your needs. Someone from our team will contact you within 4 hours.
+
+In the meantime, feel free to check out [relevant resource/link].
+
+Best regards,
+[Your Name]`
+    }
+  ]);
+  const [filters, setFilters] = useState([
+    { id: 1, name: 'VIP Filter', criteria: 'From: Boss, key clients', action: 'Forward to VIP folder + notification', active: true },
+    { id: 2, name: 'Sales Filter', criteria: 'Subject contains: Quote, pricing, proposal', action: 'Forward to sales folder + auto-response', active: true },
+    { id: 3, name: 'Support Filter', criteria: 'Subject contains: Problem, issue, help', action: 'Create support ticket + auto-response', active: true }
+  ]);
+  const [expandedSections, setExpandedSections] = useState({});
+
+  const toggleSection = (section) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  const priorityLevels = [
+    { level: 'URGENT', time: 'Same day', color: 'bg-red-500', characteristics: 'Money/crisis/deadline' },
+    { level: 'IMPORTANT', time: '24 hours', color: 'bg-pink-500', characteristics: 'Opportunities/clients' },
+    { level: 'ROUTINE', time: '48 hours', color: 'bg-purple-500', characteristics: 'Regular business' },
+    { level: 'LOW', time: '1 week', color: 'bg-gray-500', characteristics: 'FYI/newsletters' }
+  ];
+
+  const messageTypes = [
+    { type: 'Sales Inquiries', keywords: 'Quote, pricing, services, interested', responseTime: '4 hours', queue: 'Sales pipeline' },
+    { type: 'Support Requests', keywords: 'Problem, issue, help, not working', responseTime: '2 hours', queue: 'Support queue' },
+    { type: 'Billing/Finance', keywords: 'Payment, invoice, billing, account', responseTime: '24 hours', queue: 'Finance/accounting' },
+    { type: 'Partnerships', keywords: 'Partnership, collaboration, vendor', responseTime: '48 hours', queue: 'Business development' },
+    { type: 'General Inquiries', keywords: 'Information, question, wondering', responseTime: '48 hours', queue: 'General inbox' },
+    { type: 'Applications', keywords: 'Resume, application, position, hiring', responseTime: '1 week', queue: 'HR/hiring manager' }
+  ];
+
+  const TabButton = ({ id, label, icon: Icon, active, onClick }) => (
+    <button
+      onClick={() => onClick(id)}
+      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all duration-200 ${
+        active 
+          ? 'bg-pink-500 text-white shadow-lg' 
+          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+      }`}
+    >
+      <Icon size={18} />
+      {label}
+    </button>
+  );
+
+  const Section = ({ title, children, id }) => (
+    <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+      <button
+        onClick={() => toggleSection(id)}
+        className="w-full px-6 py-4 bg-black text-white flex items-center justify-between hover:bg-gray-800 transition-colors"
+      >
+        <h3 className="text-lg font-bold">{title}</h3>
+        {expandedSections[id] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+      </button>
+      {expandedSections[id] && (
+        <div className="p-6">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-black text-white p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="flex items-center gap-2">
+              <div className="flex">
+                <div className="w-4 h-12 bg-black"></div>
+                <div className="w-4 h-8 bg-pink-500 mt-4"></div>
+                <div className="w-4 h-6 bg-purple-500 mt-6"></div>
+                <div className="w-4 h-12 bg-black"></div>
+                <div className="w-4 h-4 bg-pink-500 mt-8"></div>
+              </div>
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">COMMIT ME CO.</h1>
+              <p className="text-gray-300 text-sm">Built to Break the Chaos</p>
+            </div>
+          </div>
+          <h2 className="text-3xl font-bold mb-2">MESSAGE ROUTING PLANNER</h2>
+          <p className="text-gray-300">Your Inbox Isn't a Project Manager - Transform Communication Chaos into Strategic Flow</p>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-6 py-4">
+          <div className="flex gap-4 overflow-x-auto">
+            <TabButton id="triage" label="Triage System" icon={Target} active={activeTab === 'triage'} onClick={setActiveTab} />
+            <TabButton id="classifier" label="Message Types" icon={MessageSquare} active={activeTab === 'classifier'} onClick={setActiveTab} />
+            <TabButton id="templates" label="Templates" icon={Edit} active={activeTab === 'templates'} onClick={setActiveTab} />
+            <TabButton id="filters" label="Filters & Routing" icon={Filter} active={activeTab === 'filters'} onClick={setActiveTab} />
+            <TabButton id="tracking" label="Follow-up Tracking" icon={Clock} active={activeTab === 'tracking'} onClick={setActiveTab} />
+            <TabButton id="metrics" label="Performance" icon={BarChart3} active={activeTab === 'metrics'} onClick={setActiveTab} />
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="max-w-6xl mx-auto p-6 space-y-6">
+        
+        {activeTab === 'triage' && (
+          <>
+            <Section title="🚨 MESSAGE PRIORITY MATRIX" id="priority-matrix">
+              <div className="grid gap-4">
+                {priorityLevels.map((level, index) => (
+                  <div key={index} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                    <div className={`w-4 h-4 rounded ${level.color}`}></div>
+                    <div className="flex-1 grid grid-cols-4 gap-4">
+                      <span className="font-bold text-lg">{level.level}</span>
+                      <span className="text-gray-600">{level.time}</span>
+                      <span className="text-gray-600">{level.characteristics}</span>
+                      <span className="text-sm text-gray-500">Handle accordingly</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Section>
+
+            <Section title="🎯 TRIAGE DECISION TREE" id="decision-tree">
+              <div className="space-y-4">
+                <div className="bg-gradient-to-r from-pink-50 to-purple-50 p-6 rounded-lg">
+                  <h4 className="font-bold mb-4">STEP 1: SENDER CHECK</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <label className="flex items-center gap-2">
+                      <input type="checkbox" className="rounded" />
+                      <span><strong>VIP</strong> - Client, boss, key prospect → High priority</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input type="checkbox" className="rounded" />
+                      <span><strong>KNOWN</strong> - Colleague, vendor, contact → Medium priority</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input type="checkbox" className="rounded" />
+                      <span><strong>UNKNOWN</strong> - Cold outreach, first contact → Low priority</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input type="checkbox" className="rounded" />
+                      <span><strong>SPAM</strong> - Obvious junk → Delete</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg">
+                  <h4 className="font-bold mb-4">STEP 2: SUBJECT LINE SCAN</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <label className="flex items-center gap-2">
+                      <input type="checkbox" className="rounded" />
+                      <span><strong>URGENT KEYWORDS</strong> - "Emergency," "ASAP," "Deadline" → Urgent</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input type="checkbox" className="rounded" />
+                      <span><strong>MONEY KEYWORDS</strong> - "Payment," "Invoice," "Proposal" → Important</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input type="checkbox" className="rounded" />
+                      <span><strong>MEETING KEYWORDS</strong> - "Schedule," "Calendar," "Appointment" → Important</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input type="checkbox" className="rounded" />
+                      <span><strong>INFO KEYWORDS</strong> - "Update," "FYI," "Newsletter" → Low priority</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-pink-50 to-purple-50 p-6 rounded-lg">
+                  <h4 className="font-bold mb-4">STEP 3: CONTENT QUICK SCAN</h4>
+                  <div className="grid grid-cols-1 gap-4">
+                    <label className="flex items-center gap-2">
+                      <input type="checkbox" className="rounded" />
+                      <span><strong>ACTION REQUIRED</strong> - Needs response/decision → Route to appropriate queue</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input type="checkbox" className="rounded" />
+                      <span><strong>INFORMATION ONLY</strong> - FYI, no action needed → File/archive</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input type="checkbox" className="rounded" />
+                      <span><strong>DELEGATION NEEDED</strong> - Someone else should handle → Forward immediately</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </Section>
+
+            <Section title="⏰ THE 2-MINUTE RULE & BATCH PROCESSING" id="batch-processing">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="bg-pink-50 p-6 rounded-lg">
+                  <h4 className="font-bold mb-4 text-pink-700">THE 2-MINUTE RULE</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle size={16} className="text-green-500" />
+                      <span><strong>DO IT NOW</strong> - Respond immediately</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle size={16} className="text-green-500" />
+                      <span><strong>DON'T DEFER</strong> - It'll take longer to track later</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle size={16} className="text-green-500" />
+                      <span><strong>DON'T OVERTHINK</strong> - Perfect is the enemy of done</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-purple-50 p-6 rounded-lg">
+                  <h4 className="font-bold mb-4 text-purple-700">BATCH PROCESSING SCHEDULE</h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold">9:00 AM</span>
+                      <span className="text-sm">Urgent messages (30 min max)</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold">1:00 PM</span>
+                      <span className="text-sm">Important messages (45 min max)</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold">4:00 PM</span>
+                      <span className="text-sm">Routine messages (30 min max)</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold">6:00 PM</span>
+                      <span className="text-sm">Low priority cleanup (15 min max)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Section>
+          </>
+        )}
+
+        {activeTab === 'classifier' && (
+          <Section title="📋 THE 7 TYPES OF BUSINESS MESSAGES" id="message-types">
+            <div className="grid gap-4">
+              {messageTypes.map((type, index) => (
+                <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div className="grid md:grid-cols-4 gap-4 items-center">
+                    <div>
+                      <h4 className="font-bold text-lg">{type.type}</h4>
+                      <p className="text-sm text-gray-600">Keywords: {type.keywords}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm text-gray-500">Response Time</p>
+                      <p className="font-semibold text-pink-600">{type.responseTime}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm text-gray-500">Route To</p>
+                      <p className="font-semibold text-purple-600">{type.queue}</p>
+                    </div>
+                    <div className="flex justify-end">
+                      <button className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
+                        Configure
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {activeTab === 'templates' && (
+          <Section title="🤖 AUTO-RESPONSE TEMPLATES" id="templates">
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h4 className="text-lg font-semibold">Manage Response Templates</h4>
+                <button className="bg-pink-500 text-white px-4 py-2 rounded-lg hover:bg-pink-600 transition-colors flex items-center gap-2">
+                  <Plus size={16} />
+                  Add Template
+                </button>
+              </div>
+              
+              <div className="grid gap-4">
+                {templates.map((template) => (
+                  <div key={template.id} className="border border-gray-200 rounded-lg p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h5 className="font-bold text-lg">{template.name}</h5>
+                        <p className="text-gray-600">Subject: {template.subject}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button className="p-2 text-gray-400 hover:text-purple-500 transition-colors">
+                          <Edit size={16} />
+                        </button>
+                        <button className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans">{template.body}</pre>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Section>
+        )}
+
+        {activeTab === 'filters' && (
+          <>
+            <Section title="📨 EMAIL FILTER SETUP" id="email-filters">
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-lg font-semibold">Active Filters</h4>
+                  <button className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-2">
+                    <Plus size={16} />
+                    Add Filter
+                  </button>
+                </div>
+                
+                <div className="grid gap-4">
+                  {filters.map((filter) => (
+                    <div key={filter.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h5 className="font-bold">{filter.name}</h5>
+                            <span className={`px-2 py-1 text-xs rounded-full ${filter.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                              {filter.active ? 'Active' : 'Inactive'}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-1">Criteria: {filter.criteria}</p>
+                          <p className="text-sm text-gray-600">Action: {filter.action}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="flex items-center">
+                            <input 
+                              type="checkbox" 
+                              checked={filter.active}
+                              onChange={() => {
+                                setFilters(filters.map(f => 
+                                  f.id === filter.id ? { ...f, active: !f.active } : f
+                                ));
+                              }}
+                              className="rounded"
+                            />
+                          </label>
+                          <button className="p-2 text-gray-400 hover:text-purple-500 transition-colors">
+                            <Edit size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Section>
+
+            <Section title="🔄 MESSAGE ROUTING WORKFLOW" id="routing-workflow">
+              <div className="bg-gradient-to-b from-gray-50 to-white p-6 rounded-lg">
+                <h4 className="font-bold mb-6 text-center">THE ROUTING DECISION FLOWCHART</h4>
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <div className="inline-block bg-black text-white px-6 py-3 rounded-lg font-semibold">
+                      MESSAGE ARRIVES
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-center">
+                    <div className="w-0.5 h-8 bg-gray-400"></div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-red-50 p-4 rounded-lg text-center">
+                      <p className="font-semibold mb-2">Is it SPAM?</p>
+                      <p className="text-sm text-red-600">YES → DELETE</p>
+                    </div>
+                    <div className="bg-pink-50 p-4 rounded-lg text-center">
+                      <p className="font-semibold mb-2">Is sender VIP?</p>
+                      <p className="text-sm text-pink-600">YES → URGENT QUEUE</p>
+                    </div>
+                    <div className="bg-purple-50 p-4 rounded-lg text-center">
+                      <p className="font-semibold mb-2">Contains urgent keywords?</p>
+                      <p className="text-sm text-purple-600">YES → URGENT QUEUE</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-blue-50 p-4 rounded-lg text-center">
+                      <p className="font-semibold mb-2">Sales inquiry?</p>
+                      <p className="text-sm text-blue-600">YES → SALES QUEUE</p>
+                    </div>
+                    <div className="bg-green-50 p-4 rounded-lg text-center">
+                      <p className="font-semibold mb-2">Support request?</p>
+                      <p className="text-sm text-green-600">YES → SUPPORT QUEUE</p>
+                    </div>
+                    <div className="bg-yellow-50 p-4 rounded-lg text-center">
+                      <p className="font-semibold mb-2">Billing/Finance?</p>
+                      <p className="text-sm text-yellow-600">YES → FINANCE QUEUE</p>
+                    </div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="inline-block bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-semibold">
+                      GENERAL QUEUE
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Section>
+          </>
+        )}
+
+        {activeTab === 'tracking' && (
+          <Section title="📊 FOLLOW-UP TRACKING SHEET" id="follow-up-tracking">
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h4 className="text-lg font-semibold">Active Follow-ups</h4>
+                <button className="bg-pink-500 text-white px-4 py-2 rounded-lg hover:bg-pink-600 transition-colors flex items-center gap-2">
+                  <Plus size={16} />
+                  Add Follow-up
+                </button>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border border-gray-200 rounded-lg">
+                  <thead>
+                    <tr className="bg-black text-white">
+                      <th className="border border-gray-300 px-4 py-2 text-left">Contact</th>
+                      <th className="border border-gray-300 px-4 py-2 text-left">Initial Date</th>
+                      <th className="border border-gray-300 px-4 py-2 text-left">Message Type</th>
+                      <th className="border border-gray-300 px-4 py-2 text-left">Priority</th>
+                      <th className="border border-gray-300 px-4 py-2 text-left">Response Sent</th>
+                      <th className="border border-gray-300 px-4 py-2 text-left">Follow-up Due</th>
+                      <th className="border border-gray-300 px-4 py-2 text-left">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="hover:bg-gray-50">
+                      <td className="border border-gray-300 px-4 py-2">john@company.com</td>
+                      <td className="border border-gray-300 px-4 py-2">07/10/2025</td>
+                      <td className="border border-gray-300 px-4 py-2">Sales</td>
+                      <td className="border border-gray-300 px-4 py-2">
+                        <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs">U</span>
+                      </td>
+                      <td className="border border-gray-300 px-4 py-2">
+                        <span className="text-green-600">Yes</span>
+                      </td>
+                      <td className="border border-gray-300 px-4 py-2">07/12/2025</td>
+                      <td className="border border-gray-300 px-4 py-2">
+                        <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">Open</span>
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-gray-50">
+                      <td className="border border-gray-300 px-4 py-2">sarah@startup.io</td>
+                      <td className="border border-gray-300 px-4 py-2">07/09/2025</td>
+                      <td className="border border-gray-300 px-4 py-2">Support</td>
+                      <td className="border border-gray-300 px-4 py-2">
+                        <span className="bg-pink-100 text-pink-700 px-2 py-1 rounded text-xs">I</span>
+                      </td>
+                      <td className="border border-gray-300 px-4 py-2">
+                        <span className="text-green-600">Yes</span>
+                      </td>
+                      <td className="border border-gray-300 px-4 py-2">07/11/2025</td>
+                      <td className="border border-gray-300 px-4 py-2">
+                        <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">Closed</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h5 className="font-semibold mb-2">Priority Key:</h5>
+                <div className="flex gap-4 text-sm">
+                  <span><strong>U</strong> = Urgent</span>
+                  <span><strong>I</strong> = Important</span>
+                  <span><strong>R</strong> = Routine</span>
+                  <span><strong>L</strong> = Low</span>
+                </div>
+              </div>
+            </div>
+          </Section>
+        )}
+
+        {activeTab === 'metrics' && (
+          <Section title="📈 MESSAGE METRICS TRACKER" id="metrics-tracker">
+            <div className="space-y-8">
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="bg-gradient-to-br from-pink-500 to-pink-600 text-white p-6 rounded-xl">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-pink-100 text-sm">Total Messages</p>
+                      <p className="text-2xl font-bold">247</p>
+                    </div>
+                    <MessageSquare size={32} className="text-pink-200" />
+                  </div>
+                </div>
+                
+                <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-xl">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-purple-100 text-sm">Response Rate</p>
+                      <p className="text-2xl font-bold">94%</p>
+                    </div>
+                    <CheckCircle size={32} className="text-purple-200" />
+                  </div>
+                </div>
+                
+                <div className="bg-gradient-to-br from-black to-gray-800 text-white p-6 rounded-xl">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-gray-300 text-sm">Avg Response Time</p>
+                      <p className="text-2xl font-bold">2.3h</p>
+                    </div>
+                    <Clock size={32} className="text-gray-400" />
+                  </div>
+                </div>
+                
+                <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-xl">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-green-100 text-sm">Outstanding</p>
+                      <p className="text-2xl font-bold">12</p>
+                    </div>
+                    <Users size={32} className="text-green-200" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <h4 className="font-bold mb-4">Queue Performance</h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span>Urgent Queue</span>
+                      <span className="font-semibold text-red-600">1.2h avg</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Sales Queue</span>
+                      <span className="font-semibold text-pink-600">2.8h avg</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Support Queue</span>
+                      <span className="font-semibold text-purple-600">1.5h avg</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>General Queue</span>
+                      <span className="font-semibold text-gray-600">24h avg</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <h4 className="font-bold mb-4">Weekly Trends</h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span>Messages Processed</span>
+                      <span className="font-semibold text-green-600">↑ 15%</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Response Time</span>
+                      <span className="font-semibold text-green-600">↓ 8%</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Follow-ups Needed</span>
+                      <span className="font-semibold text-red-600">↑ 5%</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Customer Satisfaction</span>
+                      <span className="font-semibold text-green-600">↑ 12%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Section>
+        )}
+
+        {/* Action Plan Footer */}
+        <div className="bg-gradient-to-r from-pink-500 to-purple-600 text-white p-8 rounded-xl">
+          <h3 className="text-2xl font-bold mb-6">🎯 IMMEDIATE ACTION PLAN</h3>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div>
+              <h4 className="font-bold mb-3">TODAY (30 minutes):</h4>
+              <ul className="space-y-2 text-sm">
+                <li>□ Count messages in your current inbox</li>
+                <li>□ Identify 3 VIP senders who need priority</li>
+                <li>□ Set up basic urgent/routine folders</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-bold mb-3">THIS WEEK (1 hour):</h4>
+              <ul className="space-y-2 text-sm">
+                <li>□ Create auto-response templates</li>
+                <li>□ Set up email filters for common message types</li>
+                <li>□ Establish daily batch processing schedule</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-bold mb-3">THIS MONTH (2 hours):</h4>
+              <ul className="space-y-2 text-sm">
+                <li>□ Implement full routing system</li>
+                <li>□ Train team on new message protocols</li>
+                <li>□ Set up performance tracking</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Mantras */}
+        <div className="bg-black text-white p-6 rounded-xl text-center">
+          <h3 className="text-xl font-bold mb-4">💡 MESSAGE ROUTING MANTRAS</h3>
+          <div className="space-y-2 text-lg">
+            <p>"Every message deserves a destination, not a vacation in your inbox."</p>
+            <p>"If you're the bottleneck, you're the problem."</p>
+            <p>"Response time is respect time."</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default MessageRoutingPlanner;
